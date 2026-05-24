@@ -381,31 +381,42 @@ function loadGLTF(path, name, phaseId) {
   });
 }
 
-// Parallel loading in batches (6 concurrent for HTTP/2 efficiency)
-async function loadInBatches(tasks, batchSize = 6) {
-  const results = [];
-  for (let i = 0; i < tasks.length; i += batchSize) {
-    const batch = tasks.slice(i, i + batchSize);
-    const r = await Promise.all(batch.map(t => t()));
-    results.push(...r);
-  }
-  return results;
+// Parallel using multiple loader instances (Three.js GLTFLoader not thread-safe per instance)
+async function loadParallel(items, makeLoader) {
+  // Each item gets its own loader instance via makeLoader(), runs all in parallel
+  return Promise.all(items.map(async (it) => {
+    const myLoader = new GLTFLoader();
+    return new Promise((resolve) => {
+      myLoader.load(it.path,
+        (gltf) => { tick(it.name, it.phaseId); resolve({ item: it, gltf }); },
+        undefined,
+        (err) => { console.warn('Load failed:', it.path, err); tick('FAIL: ' + it.name, it.phaseId); resolve({ item: it, gltf: null }); }
+      );
+    });
+  }));
 }
 
 async function loadAll() {
   loadingText.textContent = 'LOADING 3D MODELS · 병렬 다운로드';
   loadStartTime = performance.now();
 
-  // Build all task lists
-  const allTasks = [
-    ...BUILDING_FILES.map(n => () => loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'buildings').then(r => { if (r) buildingModels.push(r.scene); })),
-    ...LOW_BUILDING_FILES.map(n => () => loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'low-buildings').then(r => { if (r) lowBuildingModels.push(r.scene); })),
-    ...CHARACTER_FILES.map(n => () => loadGLTF(`${BASE}/mixamo/${n}.glb`, n, 'characters').then(r => { if (r) characterModels.push({ scene: r.scene, animations: r.animations }); })),
-    ...CAR_FILES.map(n => () => loadGLTF(`${BASE}/car/Models/GLB format/${n}.glb`, n, 'cars').then(r => { if (r) carModels.push(r.scene); }))
-  ];
+  const buildingItems = BUILDING_FILES.map(n => ({ path: `${BASE}/city/Models/GLB format/${n}.glb`, name: n, phaseId: 'buildings' }));
+  const lowBuildingItems = LOW_BUILDING_FILES.map(n => ({ path: `${BASE}/city/Models/GLB format/${n}.glb`, name: n, phaseId: 'low-buildings' }));
+  const characterItems = CHARACTER_FILES.map(n => ({ path: `${BASE}/mixamo/${n}.glb`, name: n, phaseId: 'characters' }));
+  const carItems = CAR_FILES.map(n => ({ path: `${BASE}/car/Models/GLB format/${n}.glb`, name: n, phaseId: 'cars' }));
 
-  // Run all in parallel batches of 6
-  await loadInBatches(allTasks, 6);
+  // All categories loading in parallel (each item has own loader)
+  const [buildResults, lowResults, charResults, carResults] = await Promise.all([
+    loadParallel(buildingItems),
+    loadParallel(lowBuildingItems),
+    loadParallel(characterItems),
+    loadParallel(carItems)
+  ]);
+
+  buildResults.forEach(r => { if (r.gltf) buildingModels.push(r.gltf.scene); });
+  lowResults.forEach(r => { if (r.gltf) lowBuildingModels.push(r.gltf.scene); });
+  charResults.forEach(r => { if (r.gltf) characterModels.push({ scene: r.gltf.scene, animations: r.gltf.animations }); });
+  carResults.forEach(r => { if (r.gltf) carModels.push(r.gltf.scene); });
 
   loadingText.textContent = 'BUILDING WORLD · 세계 구축 중';
   loadingDetail.textContent = '도시 배치, 캐릭터 배치, 자동차 배치 중...';
@@ -807,16 +818,39 @@ function animate() {
   composer.render();
 }
 
+// Global error catcher (visible on loading screen)
+window.addEventListener('error', (e) => {
+  console.error('Global error:', e.error || e.message);
+  loadingText.textContent = 'ERROR · 콘솔 확인';
+  loadingDetail.textContent = (e.error?.message || e.message || 'unknown').substring(0, 100);
+  loadingDetail.style.color = '#c0392b';
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason);
+  loadingText.textContent = 'PROMISE ERROR · 콘솔 확인';
+  loadingDetail.textContent = String(e.reason?.message || e.reason || 'unknown').substring(0, 100);
+  loadingDetail.style.color = '#c0392b';
+});
+
 (async () => {
-  await loadAll();
-  placeBuildings();
-  placeCars();
-  placeCharacters();
-  loadingText.textContent = 'READY.';
-  setTimeout(() => {
-    document.getElementById('loading').classList.add('hide');
-    animate();
-  }, 400);
+  try {
+    console.log('Loading started, total assets:', totalAssets);
+    await loadAll();
+    console.log('Loading done. Buildings:', buildingModels.length, 'Characters:', characterModels.length, 'Cars:', carModels.length);
+    placeBuildings();
+    placeCars();
+    placeCharacters();
+    loadingText.textContent = 'READY.';
+    setTimeout(() => {
+      document.getElementById('loading').classList.add('hide');
+      animate();
+    }, 400);
+  } catch (err) {
+    console.error('Init failed:', err);
+    loadingText.textContent = 'INIT ERROR';
+    loadingDetail.textContent = String(err?.message || err).substring(0, 100);
+    loadingDetail.style.color = '#c0392b';
+  }
 })();
 </script>
 
