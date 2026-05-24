@@ -10,14 +10,28 @@
 html, body { font-family:-apple-system, 'Pretendard', 'Noto Sans KR', sans-serif; background:#000; color:var(--gsg-paper); overflow:hidden; height:100vh; width:100vw; position:fixed; }
 canvas { display:block; cursor:crosshair; }
 
-#loading { position:fixed; inset:0; background:#FAF7F0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.8s ease; }
+#loading { position:fixed; inset:0; background:#FAF7F0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.8s ease; padding:24px; }
 #loading.hide { opacity:0; pointer-events:none; }
-.loading-brand { font-family:'Noto Serif KR', serif; font-size:72px; color:#1a1410; letter-spacing:0.15em; margin-bottom:8px; }
-.loading-sub { font-size:11px; letter-spacing:0.4em; opacity:0.5; margin-bottom:60px; color:#1a1410; }
-.loading-bar { width:340px; height:1px; background:rgba(0,0,0,0.1); position:relative; overflow:hidden; }
-.loading-bar-fill { position:absolute; top:0; left:0; width:0%; height:100%; background:#C9A24B; transition:width 0.3s ease; }
-.loading-text { font-family:'SF Mono', monospace; font-size:11px; letter-spacing:0.25em; opacity:0.6; margin-top:16px; color:#1a1410; }
-.loading-detail { font-family:'SF Mono', monospace; font-size:10px; opacity:0.4; margin-top:8px; color:#1a1410; }
+.loading-brand { font-family:'Noto Serif KR', serif; font-size:64px; color:#1a1410; letter-spacing:0.15em; margin-bottom:4px; }
+.loading-sub { font-size:10px; letter-spacing:0.4em; opacity:0.5; margin-bottom:36px; color:#1a1410; }
+.loading-percent { font-family:'Noto Serif KR', serif; font-size:88px; color:#C9A24B; font-weight:600; line-height:1; letter-spacing:-0.02em; font-feature-settings:'tnum'; margin-bottom:8px; transition:color 0.3s; position:relative; }
+.loading-percent::after { content:'%'; font-size:32px; color:#1a1410; opacity:0.4; margin-left:6px; vertical-align:top; position:relative; top:14px; font-weight:400; }
+.loading-bar-wrap { width:min(420px, 80vw); position:relative; margin-top:12px; margin-bottom:24px; }
+.loading-bar { width:100%; height:8px; background:rgba(26,20,16,0.08); border-radius:4px; position:relative; overflow:hidden; }
+.loading-bar-fill { position:absolute; top:0; left:0; width:0%; height:100%; background:linear-gradient(90deg, #C9A24B 0%, #E6C87A 50%, #C9A24B 100%); background-size:200% 100%; border-radius:4px; transition:width 0.4s cubic-bezier(0.4,0,0.2,1); animation:shimmer 2s linear infinite; box-shadow:0 0 12px rgba(201,162,75,0.5); }
+@keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+.loading-counts { display:flex; justify-content:space-between; width:min(420px, 80vw); font-family:'SF Mono', monospace; font-size:11px; color:#1a1410; opacity:0.7; letter-spacing:0.1em; margin-bottom:32px; }
+.loading-counts strong { color:#C9A24B; font-weight:700; }
+.loading-text { font-family:'SF Mono', monospace; font-size:11px; letter-spacing:0.25em; opacity:0.8; margin-top:0; color:#1a1410; min-height:16px; }
+.loading-detail { font-family:'SF Mono', monospace; font-size:10px; opacity:0.5; margin-top:6px; color:#1a1410; min-height:14px; text-align:center; max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.loading-phases { display:flex; flex-direction:column; gap:8px; margin-top:28px; width:min(420px, 80vw); }
+.phase-item { display:flex; justify-content:space-between; align-items:center; font-family:'SF Mono', monospace; font-size:11px; color:#1a1410; padding:6px 0; border-bottom:1px solid rgba(26,20,16,0.06); }
+.phase-name { letter-spacing:0.15em; opacity:0.8; }
+.phase-count { color:#C9A24B; font-weight:700; transition:color 0.3s; }
+.phase-item.done .phase-count { color:#059669; }
+.phase-item.done .phase-count::after { content:' ✓'; }
+.phase-spinner { display:inline-block; width:10px; height:10px; border:2px solid rgba(201,162,75,0.3); border-top-color:#C9A24B; border-radius:50%; animation:spin 0.7s linear infinite; margin-right:8px; vertical-align:middle; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
 #intro-overlay { position:fixed; inset:0; background:rgba(255,247,230,0.92); backdrop-filter:blur(10px); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5000; text-align:center; cursor:pointer; transition:opacity 0.4s ease; color:#1a1410; padding:24px; }
 #intro-overlay.hide { opacity:0; pointer-events:none; }
@@ -92,9 +106,17 @@ canvas { display:block; cursor:crosshair; }
 <div id="loading">
   <div class="loading-brand">관상감</div>
   <div class="loading-sub">觀 象 監 · GWANSANGGAM</div>
-  <div class="loading-bar"><div class="loading-bar-fill" id="loading-bar"></div></div>
+  <div class="loading-percent" id="loading-percent">0</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar"><div class="loading-bar-fill" id="loading-bar"></div></div>
+  </div>
+  <div class="loading-counts">
+    <span>LOADED <strong id="loading-loaded">0</strong> / <strong id="loading-total">0</strong></span>
+    <span><strong id="loading-eta">—</strong> 초 남음</span>
+  </div>
   <div class="loading-text" id="loading-text">INITIALIZING...</div>
   <div class="loading-detail" id="loading-detail">&nbsp;</div>
+  <div class="loading-phases" id="loading-phases"></div>
 </div>
 
 <div id="intro-overlay">
@@ -278,50 +300,115 @@ const CHARACTER_FILES = ['Soldier','Xbot'];
 
 const totalAssets = BUILDING_FILES.length + LOW_BUILDING_FILES.length + CHARACTER_FILES.length + CAR_FILES.length;
 let loadedCount = 0;
+let loadStartTime = 0;
 const buildingModels = [];
 const lowBuildingModels = [];
 const characterModels = [];
 const carModels = [];
 
+// Loading UI elements
 const loadingBar = document.getElementById('loading-bar');
+const loadingPercent = document.getElementById('loading-percent');
 const loadingText = document.getElementById('loading-text');
 const loadingDetail = document.getElementById('loading-detail');
+const loadingLoaded = document.getElementById('loading-loaded');
+const loadingTotal = document.getElementById('loading-total');
+const loadingEta = document.getElementById('loading-eta');
+const loadingPhases = document.getElementById('loading-phases');
 
-function tick(name) {
-  loadedCount++;
-  loadingBar.style.width = (loadedCount / totalAssets * 100) + '%';
-  loadingDetail.textContent = `${loadedCount} / ${totalAssets} · ${name}`;
+// Phase tracking (4 categories)
+const PHASES = [
+  { id: 'buildings', label: '빌딩 · BUILDINGS', total: BUILDING_FILES.length, loaded: 0 },
+  { id: 'low-buildings', label: '저층 빌딩 · LOW DETAIL', total: LOW_BUILDING_FILES.length, loaded: 0 },
+  { id: 'characters', label: '캐릭터 · CHARACTERS', total: CHARACTER_FILES.length, loaded: 0 },
+  { id: 'cars', label: '자동차 · CARS', total: CAR_FILES.length, loaded: 0 }
+];
+
+// Render phases UI
+PHASES.forEach(p => {
+  const item = document.createElement('div');
+  item.className = 'phase-item';
+  item.id = 'phase-' + p.id;
+  item.innerHTML = `<span class="phase-name">${p.label}</span><span class="phase-count"><span class="phase-spinner"></span><span id="phase-count-${p.id}">0 / ${p.total}</span></span>`;
+  loadingPhases.appendChild(item);
+});
+
+loadingTotal.textContent = totalAssets;
+
+function updatePhaseUI(phaseId) {
+  const phase = PHASES.find(p => p.id === phaseId);
+  if (!phase) return;
+  document.getElementById('phase-count-' + phaseId).textContent = `${phase.loaded} / ${phase.total}`;
+  if (phase.loaded >= phase.total) {
+    const item = document.getElementById('phase-' + phaseId);
+    item.classList.add('done');
+    const spinner = item.querySelector('.phase-spinner');
+    if (spinner) spinner.style.display = 'none';
+  }
 }
 
-function loadGLTF(path, name) {
+function tick(name, phaseId) {
+  loadedCount++;
+  const pct = Math.round((loadedCount / totalAssets) * 100);
+  loadingBar.style.width = pct + '%';
+  loadingPercent.textContent = pct;
+  loadingLoaded.textContent = loadedCount;
+  loadingDetail.textContent = name;
+
+  // Compute ETA
+  if (loadStartTime > 0 && loadedCount > 0 && loadedCount < totalAssets) {
+    const elapsed = (performance.now() - loadStartTime) / 1000;
+    const perAsset = elapsed / loadedCount;
+    const remaining = (totalAssets - loadedCount) * perAsset;
+    loadingEta.textContent = Math.max(1, Math.round(remaining));
+  } else if (loadedCount >= totalAssets) {
+    loadingEta.textContent = '0';
+  }
+
+  if (phaseId) {
+    const phase = PHASES.find(p => p.id === phaseId);
+    if (phase) { phase.loaded++; updatePhaseUI(phaseId); }
+  }
+}
+
+function loadGLTF(path, name, phaseId) {
   return new Promise((resolve) => {
-    loader.load(path, (gltf) => { tick(name); resolve(gltf); }, undefined, (err) => {
+    loader.load(path, (gltf) => { tick(name, phaseId); resolve(gltf); }, undefined, (err) => {
       console.warn('Load failed:', path, err);
-      tick('FAIL: ' + name);
+      tick('FAIL: ' + name, phaseId);
       resolve(null);
     });
   });
 }
 
+// Parallel loading in batches (6 concurrent for HTTP/2 efficiency)
+async function loadInBatches(tasks, batchSize = 6) {
+  const results = [];
+  for (let i = 0; i < tasks.length; i += batchSize) {
+    const batch = tasks.slice(i, i + batchSize);
+    const r = await Promise.all(batch.map(t => t()));
+    results.push(...r);
+  }
+  return results;
+}
+
 async function loadAll() {
-  loadingText.textContent = 'LOADING 3D MODELS...';
-  for (const n of BUILDING_FILES) {
-    const r = await loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n);
-    if (r) buildingModels.push(r.scene);
-  }
-  for (const n of LOW_BUILDING_FILES) {
-    const r = await loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n);
-    if (r) lowBuildingModels.push(r.scene);
-  }
-  for (const n of CHARACTER_FILES) {
-    const r = await loadGLTF(`${BASE}/mixamo/${n}.glb`, n);
-    if (r) characterModels.push({ scene: r.scene, animations: r.animations });
-  }
-  for (const n of CAR_FILES) {
-    const r = await loadGLTF(`${BASE}/car/Models/GLB format/${n}.glb`, n);
-    if (r) carModels.push(r.scene);
-  }
-  loadingText.textContent = 'BUILDING WORLD...';
+  loadingText.textContent = 'LOADING 3D MODELS · 병렬 다운로드';
+  loadStartTime = performance.now();
+
+  // Build all task lists
+  const allTasks = [
+    ...BUILDING_FILES.map(n => () => loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'buildings').then(r => { if (r) buildingModels.push(r.scene); })),
+    ...LOW_BUILDING_FILES.map(n => () => loadGLTF(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'low-buildings').then(r => { if (r) lowBuildingModels.push(r.scene); })),
+    ...CHARACTER_FILES.map(n => () => loadGLTF(`${BASE}/mixamo/${n}.glb`, n, 'characters').then(r => { if (r) characterModels.push({ scene: r.scene, animations: r.animations }); })),
+    ...CAR_FILES.map(n => () => loadGLTF(`${BASE}/car/Models/GLB format/${n}.glb`, n, 'cars').then(r => { if (r) carModels.push(r.scene); }))
+  ];
+
+  // Run all in parallel batches of 6
+  await loadInBatches(allTasks, 6);
+
+  loadingText.textContent = 'BUILDING WORLD · 세계 구축 중';
+  loadingDetail.textContent = '도시 배치, 캐릭터 배치, 자동차 배치 중...';
 }
 
 // === Build world ===
