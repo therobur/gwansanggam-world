@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>γ: 3D Three.js 거리 · 관상감 데모</title>
+<style>
+:root {
+  --gsg-ink-900: #0B1220;
+  --gsg-ink-800: #111827;
+  --gsg-ink-700: #1F2937;
+  --gsg-paper: #FAF7F0;
+  --gsg-gold-500: #C9A24B;
+  --gsg-gold-300: #E6C87A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: #000;
+  color: var(--gsg-paper);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+#canvas-container {
+  position: absolute;
+  inset: 0;
+}
+canvas { display: block; }
+
+/* HUD */
+.hud-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(11,18,32,0.9), transparent);
+  z-index: 1000;
+  pointer-events: none;
+}
+.brand {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 24px;
+  color: var(--gsg-gold-500);
+  letter-spacing: 0.08em;
+}
+.brand small { font-size: 10px; color: var(--gsg-paper); opacity: 0.5; display: block; letter-spacing: 0.25em; margin-top: 2px; }
+.location-tag {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  opacity: 0.7;
+  border-left: 2px solid var(--gsg-gold-500);
+  padding-left: 12px;
+  text-align: right;
+}
+.location-tag span { display: block; }
+.location-tag .demo-tag { color: var(--gsg-gold-500); font-weight: 600; }
+
+.hud-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to top, rgba(11,18,32,0.95), transparent);
+  z-index: 1000;
+  pointer-events: none;
+}
+.counter { font-family: 'SF Mono', monospace; font-size: 13px; letter-spacing: 0.1em; }
+.counter strong { color: var(--gsg-gold-500); font-size: 26px; font-family: 'Noto Serif KR', serif; margin-right: 12px; }
+.hint { font-size: 11px; opacity: 0.5; letter-spacing: 0.15em; }
+
+.controls-hint {
+  position: fixed;
+  top: 100px;
+  left: 40px;
+  background: rgba(11,18,32,0.8);
+  border: 1px solid var(--gsg-ink-700);
+  padding: 14px 18px;
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 280px;
+}
+.controls-hint .kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--gsg-ink-700);
+  border-radius: 3px;
+  color: var(--gsg-gold-500);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.controls-hint .label { color: var(--gsg-paper); opacity: 0.5; }
+.controls-hint .title {
+  color: var(--gsg-gold-500);
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Panel */
+.panel {
+  position: fixed;
+  top: 0;
+  right: -440px;
+  width: 440px;
+  height: 100vh;
+  background: var(--gsg-ink-800);
+  border-left: 1px solid var(--gsg-gold-500);
+  padding: 80px 36px 36px;
+  overflow-y: auto;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2000;
+  box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+}
+.panel.open { right: 0; }
+.panel-close {
+  position: absolute; top: 24px; right: 24px;
+  background: transparent;
+  border: 1px solid var(--gsg-ink-700);
+  color: var(--gsg-paper);
+  padding: 6px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  font-family: 'SF Mono', monospace;
+  pointer-events: auto;
+}
+.panel-close:hover { border-color: var(--gsg-gold-500); color: var(--gsg-gold-500); }
+.panel-id { font-family: 'SF Mono', monospace; font-size: 10px; color: var(--gsg-gold-500); letter-spacing: 0.2em; margin-bottom: 8px; }
+.panel-name { font-family: 'Noto Serif KR', serif; font-size: 36px; margin-bottom: 12px; }
+.panel-meta { font-family: 'SF Mono', monospace; font-size: 12px; opacity: 0.65; margin-bottom: 28px; line-height: 1.6; white-space: pre-line; }
+.panel-section-label { font-family: 'SF Mono', monospace; font-size: 10px; color: var(--gsg-gold-500); letter-spacing: 0.25em; margin-top: 28px; margin-bottom: 12px; }
+.panel-narrative { font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.8; opacity: 0.92; }
+.chat-box { margin-top: 16px; padding: 16px 18px; background: var(--gsg-ink-900); border: 1px solid var(--gsg-ink-700); }
+.chat-input { width: 100%; background: transparent; border: none; color: var(--gsg-paper); font-family: inherit; font-size: 14px; outline: none; }
+.chat-input::placeholder { opacity: 0.4; }
+.chat-hint { font-size: 11px; opacity: 0.4; margin-top: 10px; line-height: 1.5; }
+
+#loading {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: var(--gsg-gold-500);
+  font-family: 'SF Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+}
+</style>
+</head>
+<body>
+
+<div id="loading">LOADING THREE.JS · 3D CITY...</div>
+
+<div id="canvas-container"></div>
+
+<div class="hud-top">
+  <div class="brand">관상감 觀象監<small>ROYAL OBSERVATORY FOR TOMORROW</small></div>
+  <div class="location-tag">
+    <span class="demo-tag">DEMO γ · 3D THREE.JS</span>
+    <span>서울 가상 거리 · 오전 8:15</span>
+  </div>
+</div>
+
+<div class="controls-hint">
+  <span class="title">CONTROLS</span>
+  <div><span class="kbd">DRAG</span><span class="label">Rotate camera</span></div>
+  <div><span class="kbd">SCROLL</span><span class="label">Zoom in/out</span></div>
+  <div><span class="kbd">CLICK</span><span class="label">Select a person</span></div>
+</div>
+
+<div class="hud-bottom">
+  <div class="counter"><strong>1,784,048</strong>SYNTHETIC KOREANS · 30 VISIBLE NOW IN THIS SCENE</div>
+  <div class="hint">사람을 클릭하세요 · CLICK A PERSON</div>
+</div>
+
+<aside class="panel" id="panel">
+  <button class="panel-close" onclick="closePanel()">CLOSE ✕</button>
+  <div class="panel-id" id="panel-id">—</div>
+  <div class="panel-name" id="panel-name">—</div>
+  <div class="panel-meta" id="panel-meta">—</div>
+  <div class="panel-section-label">NARRATIVE · 인생 서사</div>
+  <div class="panel-narrative" id="panel-narrative">—</div>
+  <div class="panel-section-label">CONVERSATION · 대화</div>
+  <div class="chat-box">
+    <input type="text" class="chat-input" placeholder="이 사람에게 무엇이든 물어보세요…">
+    <div class="chat-hint">데모 모드 · 실제 사이트에선 Claude Haiku가 5,000자 narrative 기반으로 응답</div>
+  </div>
+</aside>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const PERSONAS = [
+  {id:'GOLD-013492', name:'김민지', age:32, gender:'여', addr:'서울 강남구 역삼동', job:'스타트업 마케팅 대리', narrative:'5년차 마케터. ESTJ. 주말마다 한강에서 러닝 10km. 결혼은 30대 후반으로 미루는 중. 부모님은 안동에서 사과 농사. 매달 용돈 보냄.'},
+  {id:'GOLD-007821', name:'박준호', age:45, gender:'남', addr:'서울 마포구 합정동', job:'카페 사장 (10년)', narrative:'합정역 근처 작은 로스터리 카페 운영. 코로나로 2번 폐업 위기. 둘째 딸 중학교 입학. 새벽 4시 출근.'},
+  {id:'GOLD-091203', name:'이수영', age:28, gender:'여', addr:'부산 해운대구 우동', job:'공학 박사과정 3년차', narrative:'KAIST 학사 → 부산대 박사. 논문 3편 발표. 마감 임박. 광안리 카페 단골.'},
+  {id:'GOLD-002104', name:'정태규', age:67, gender:'남', addr:'광주 동구 충장동', job:'은퇴 (전 시청 공무원)', narrative:'30년 시청 도시계획과 근무. 작년 명예퇴직. 새벽 등산 모임 회장.'},
+  {id:'GOLD-058431', name:'최유진', age:24, gender:'여', addr:'서울 관악구 신림동', job:'대학생 (국문, 휴학)', narrative:'1년 휴학 중. 카페 알바 + 그림. 첫 개인전 11월 예정.'},
+  {id:'GOLD-023891', name:'강대성', age:38, gender:'남', addr:'수원 영통구 매탄동', job:'삼성전자 반도체 (7년)', narrative:'반도체 설계. 야근 많음. 첫째 4살, 둘째 임신 중.'},
+  {id:'GOLD-041552', name:'한미경', age:55, gender:'여', addr:'대전 유성구 어은동', job:'주부 (전 간호사)', narrative:'간호사 20년 후 퇴직. 고2 딸 의대 입시 매니징.'},
+  {id:'GOLD-076109', name:'윤상현', age:41, gender:'남', addr:'인천 연수구 송도동', job:'내과의사 (개원 3년)', narrative:'서울대 의대. 송도 개원. 두 아이. 가끔 마라톤.'},
+  {id:'GOLD-088240', name:'조하늘', age:19, gender:'여', addr:'제주시 노형동', job:'고3 (미대 입시)', narrative:'수능 D-200. 홍대 시각디자인 목표. 아빠 감귤 농부.'},
+  {id:'GOLD-009732', name:'임병철', age:72, gender:'남', addr:'안동시 풍산읍', job:'사과 농부 (5대째)', narrative:'5대째 사과. 농약 안 씀. 손주 9월 결혼. 아내 작년 별세.'},
+  {id:'GOLD-104893', name:'서다은', age:26, gender:'여', addr:'서울 마포구 망원동', job:'프리랜서 일러스트', narrative:'그래픽 디자인 졸업 후 프리랜서. 인스타 팔로워 3만.'},
+  {id:'GOLD-052187', name:'노현우', age:34, gender:'남', addr:'대구 수성구 범어동', job:'학원 강사 (수학)', narrative:'대구 사범대. 학원 9년. 결혼 1년차. 두산 베어스.'},
+  {id:'GOLD-031047', name:'홍지원', age:48, gender:'여', addr:'서울 송파구 잠실동', job:'주부 (전 은행원)', narrative:'국민은행 12년 → 퇴직. 첫째 대학생, 둘째 고1.'},
+  {id:'GOLD-067391', name:'전민호', age:29, gender:'남', addr:'창원시 의창구', job:'대기업 회계팀 (3년)', narrative:'창원공대 졸업. 협력업체 → 대기업 이직. 결혼 자금 모으는 중.'},
+  {id:'GOLD-082045', name:'배소영', age:36, gender:'여', addr:'서울 종로구 평창동', job:'갤러리 큐레이터', narrative:'미국 유학 후 귀국. 평창동 갤러리 8년.'},
+  {id:'GOLD-018456', name:'문상철', age:52, gender:'남', addr:'울산 남구 옥동', job:'현대중공업 부장', narrative:'현대중 20년차. IMF 때 입사. 2명 자녀 대학생.'},
+  {id:'GOLD-095012', name:'권시은', age:21, gender:'여', addr:'서울 서대문구 신촌동', job:'연세대 경영 3학년', narrative:'고향 청주. 자취 3년. 인턴 준비. 토익 950.'},
+  {id:'GOLD-044721', name:'송재민', age:60, gender:'남', addr:'부산 동래구 안락동', job:'택시기사 (개인)', narrative:'택시 25년. 부산 골목 다 앎. 손주 2명.'},
+  {id:'GOLD-073908', name:'안지혜', age:43, gender:'여', addr:'서울 강서구 화곡동', job:'초등학교 교사 (16년)', narrative:'초등 5학년 담임. 어머니 치매로 요양원.'},
+  {id:'GOLD-029184', name:'유찬영', age:31, gender:'남', addr:'성남시 분당구 정자동', job:'네이버 백엔드 개발자', narrative:'카이스트 컴공 → 카카오 → 네이버. 4년차.'},
+  {id:'GOLD-061205', name:'임수정', age:39, gender:'여', addr:'서울 동작구 사당동', job:'간호사 (15년)', narrative:'대학병원 응급실 15년. 야간 근무. 이혼 후 자녀 1명.'},
+  {id:'GOLD-038541', name:'장기훈', age:58, gender:'남', addr:'전주시 완산구 효자동', job:'개인 한의원', narrative:'한의대 졸업. 전주 개원 25년.'},
+  {id:'GOLD-016732', name:'한도현', age:27, gender:'남', addr:'서울 영등포구 여의도동', job:'증권사 트레이더 (2년)', narrative:'고려대 경제 → 한국투자증권. 야근 많음.'},
+  {id:'GOLD-099817', name:'오민서', age:34, gender:'여', addr:'서울 성동구 성수동', job:'스타트업 CFO', narrative:'경영학 박사 수료. 성수동 푸드테크 합류.'},
+  {id:'GOLD-050194', name:'배철민', age:46, gender:'남', addr:'세종시 도담동', job:'교육부 사무관 (15년)', narrative:'행정고시 합격. 세종시 이주. 주말부부.'},
+  {id:'GOLD-085602', name:'유나리', age:23, gender:'여', addr:'서울 광진구 자양동', job:'편의점 알바 + 유튜버', narrative:'고졸 후 알바 + 콘텐츠. 구독자 4천.'},
+  {id:'GOLD-021473', name:'곽지섭', age:65, gender:'남', addr:'춘천시 효자동', job:'은퇴 (전 교사)', narrative:'고등학교 영어교사 38년. 매일 의암호 산책.'},
+  {id:'GOLD-077431', name:'채린', age:30, gender:'여', addr:'서울 용산구 이태원동', job:'외국계 IT 마케팅', narrative:'미국 유학. 구글 코리아 6년. LGBTQ 활동가.'},
+  {id:'GOLD-013094', name:'백상호', age:50, gender:'남', addr:'포항시 북구 두호동', job:'포스코 협력업체 임원', narrative:'포스코 협력업체 20년. 임원. 회식 잦음.'},
+  {id:'GOLD-064827', name:'정아라', age:25, gender:'여', addr:'서울 강북구 미아동', job:'간호조무사 (3년)', narrative:'전문대 졸 후 간호조무사. 강아지가 유일한 동거인.'}
+];
+
+// === Scene setup ===
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x0B1220, 30, 100);
+scene.background = new THREE.Color(0x0B1220);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(15, 12, 25);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+// === Lighting ===
+const ambient = new THREE.AmbientLight(0x4a4a6a, 0.5);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0xC9A24B, 0.8);
+dirLight.position.set(20, 30, 10);
+dirLight.castShadow = true;
+dirLight.shadow.camera.left = -40;
+dirLight.shadow.camera.right = 40;
+dirLight.shadow.camera.top = 40;
+dirLight.shadow.camera.bottom = -40;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+scene.add(dirLight);
+const moonLight = new THREE.PointLight(0xE6C87A, 0.4, 50);
+moonLight.position.set(-15, 25, -10);
+scene.add(moonLight);
+
+// === Ground (street + sidewalk) ===
+const streetGeo = new THREE.PlaneGeometry(60, 60);
+const streetMat = new THREE.MeshStandardMaterial({ color: 0x1a1410, roughness: 0.9 });
+const street = new THREE.Mesh(streetGeo, streetMat);
+street.rotation.x = -Math.PI / 2;
+street.receiveShadow = true;
+scene.add(street);
+
+// Crosswalk stripes
+for (let i = -4; i <= 4; i++) {
+  const stripeGeo = new THREE.PlaneGeometry(1.2, 4);
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.7 });
+  const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+  stripe.rotation.x = -Math.PI / 2;
+  stripe.position.set(i * 1.8, 0.01, 0);
+  scene.add(stripe);
+}
+
+// Street center line
+const centerLineGeo = new THREE.PlaneGeometry(60, 0.2);
+const centerLineMat = new THREE.MeshStandardMaterial({ color: 0xC9A24B, emissive: 0xC9A24B, emissiveIntensity: 0.2 });
+const centerLine = new THREE.Mesh(centerLineGeo, centerLineMat);
+centerLine.rotation.x = -Math.PI / 2;
+centerLine.position.y = 0.01;
+scene.add(centerLine);
+
+// === Buildings ===
+function makeBuilding(x, z, w, h, d) {
+  const group = new THREE.Group();
+  const bldGeo = new THREE.BoxGeometry(w, h, d);
+  const bldMat = new THREE.MeshStandardMaterial({ color: 0x0a0f1c, roughness: 0.8 });
+  const bld = new THREE.Mesh(bldGeo, bldMat);
+  bld.position.y = h / 2;
+  bld.castShadow = true;
+  bld.receiveShadow = true;
+  group.add(bld);
+
+  // Windows
+  const winGeo = new THREE.PlaneGeometry(0.4, 0.6);
+  const winMat = new THREE.MeshStandardMaterial({
+    color: 0xE6C87A,
+    emissive: 0xE6C87A,
+    emissiveIntensity: 0.8,
+    transparent: true,
+    opacity: 0.9
+  });
+  const rows = Math.floor(h / 1.5);
+  const cols = Math.floor(w / 1.2);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (Math.random() > 0.4) {
+        const win = new THREE.Mesh(winGeo, winMat.clone());
+        win.material.opacity = 0.3 + Math.random() * 0.6;
+        win.position.set(
+          -w/2 + 0.6 + c * 1.2,
+          1 + r * 1.5,
+          d/2 + 0.01
+        );
+        group.add(win);
+
+        const win2 = win.clone();
+        win2.position.z = -d/2 - 0.01;
+        win2.rotation.y = Math.PI;
+        group.add(win2);
+      }
+    }
+  }
+  group.position.set(x, 0, z);
+  return group;
+}
+
+// Place buildings along both sides of street
+const buildings = [];
+for (let i = 0; i < 8; i++) {
+  const w = 4 + Math.random() * 3;
+  const h = 8 + Math.random() * 15;
+  const d = 4 + Math.random() * 2;
+  const x = (i % 2 === 0 ? -1 : 1) * (8 + Math.random() * 4);
+  const z = -25 + i * 7 + Math.random() * 2;
+  const b = makeBuilding(x, z, w, h, d);
+  scene.add(b);
+  buildings.push(b);
+}
+
+// === Characters ===
+const characters = [];
+const SELECTED_PERSONAS = PERSONAS.slice(0, 30);
+
+function makeCharacter(p, index) {
+  const group = new THREE.Group();
+  const palette = [0xC9A24B, 0xE6C87A, 0x3B82F6, 0x0891B2, 0xDC2626, 0x059669, 0x7C3AED, 0xDB2777, 0xF59E0B, 0x10B981];
+  const skinColors = [0xF5D9A8, 0xEBC591, 0xD4A574, 0xC29D6B];
+  const c = palette[p.name.charCodeAt(0) % palette.length];
+  const sk = skinColors[p.age % skinColors.length];
+  const isF = p.gender === '여';
+
+  // Head
+  const headGeo = new THREE.SphereGeometry(0.18, 16, 16);
+  const headMat = new THREE.MeshStandardMaterial({ color: sk, roughness: 0.7 });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 1.55;
+  head.castShadow = true;
+  group.add(head);
+
+  // Hair
+  const hairGeo = new THREE.SphereGeometry(0.19, 16, 16, 0, Math.PI * 2, 0, isF ? Math.PI * 0.7 : Math.PI * 0.45);
+  const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0f0a, roughness: 0.9 });
+  const hair = new THREE.Mesh(hairGeo, hairMat);
+  hair.position.y = 1.6;
+  group.add(hair);
+
+  // Body (torso)
+  const bodyGeo = new THREE.CapsuleGeometry(0.22, 0.6, 4, 8);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = 1.0;
+  body.castShadow = true;
+  group.add(body);
+
+  // Legs
+  const legGeo = new THREE.CapsuleGeometry(0.09, 0.5, 4, 8);
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x2A2018, roughness: 0.7 });
+  const legL = new THREE.Mesh(legGeo, legMat);
+  legL.position.set(-0.1, 0.35, 0);
+  legL.castShadow = true;
+  group.add(legL);
+  const legR = new THREE.Mesh(legGeo, legMat);
+  legR.position.set(0.1, 0.35, 0);
+  legR.castShadow = true;
+  group.add(legR);
+
+  // Position randomly on street
+  group.position.set(
+    -25 + Math.random() * 50,
+    0,
+    -15 + Math.random() * 30
+  );
+  group.userData = {
+    persona: p,
+    legL,
+    legR,
+    body,
+    walkOffset: Math.random() * Math.PI * 2,
+    walkSpeed: 0.5 + Math.random() * 0.5,
+    direction: new THREE.Vector3(
+      Math.random() - 0.5,
+      0,
+      Math.random() - 0.5
+    ).normalize()
+  };
+
+  // Click target (invisible larger box around character)
+  const hitGeo = new THREE.BoxGeometry(0.8, 2, 0.8);
+  const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+  const hitBox = new THREE.Mesh(hitGeo, hitMat);
+  hitBox.position.y = 1;
+  hitBox.userData = { character: group };
+  group.add(hitBox);
+  group.userData.hitBox = hitBox;
+
+  return group;
+}
+
+SELECTED_PERSONAS.forEach((p, i) => {
+  const ch = makeCharacter(p, i);
+  scene.add(ch);
+  characters.push(ch);
+});
+
+// === Sky stars ===
+const starsGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 1000; i++) {
+  const r = 200;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  starPositions.push(
+    r * Math.sin(phi) * Math.cos(theta),
+    Math.abs(r * Math.cos(phi)),
+    r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+const starsMat = new THREE.PointsMaterial({ color: 0xE6C87A, size: 0.7, transparent: true, opacity: 0.8 });
+const stars = new THREE.Points(starsGeo, starsMat);
+scene.add(stars);
+
+// Moon
+const moonGeo = new THREE.SphereGeometry(2, 32, 32);
+const moonMat = new THREE.MeshStandardMaterial({ color: 0xE6C87A, emissive: 0xE6C87A, emissiveIntensity: 0.6 });
+const moon = new THREE.Mesh(moonGeo, moonMat);
+moon.position.set(-25, 25, -20);
+scene.add(moon);
+
+// === Controls ===
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 5;
+controls.maxDistance = 60;
+controls.maxPolarAngle = Math.PI * 0.49;
+
+// === Raycaster for clicks ===
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+renderer.domElement.addEventListener('click', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hitBoxes = characters.map(c => c.userData.hitBox);
+  const intersects = raycaster.intersectObjects(hitBoxes);
+  if (intersects.length > 0) {
+    const character = intersects[0].object.userData.character;
+    openPanel(character.userData.persona);
+
+    // Highlight selected character
+    characters.forEach(c => {
+      c.userData.body.material.emissive.setHex(0x000000);
+    });
+    character.userData.body.material.emissive.setHex(0xC9A24B);
+    character.userData.body.material.emissiveIntensity = 0.4;
+  }
+});
+
+function openPanel(p) {
+  document.getElementById('panel-id').textContent = 'PERSONA #' + p.id;
+  document.getElementById('panel-name').textContent = p.name;
+  document.getElementById('panel-meta').textContent = `${p.age}세 · ${p.gender} · ${p.addr}\n${p.job}`;
+  document.getElementById('panel-narrative').textContent = p.narrative;
+  document.getElementById('panel').classList.add('open');
+}
+window.closePanel = function() {
+  document.getElementById('panel').classList.remove('open');
+  characters.forEach(c => c.userData.body.material.emissive.setHex(0x000000));
+};
+
+// === Resize ===
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// === Animation loop ===
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  // Walk characters
+  characters.forEach(c => {
+    const ud = c.userData;
+    // Move
+    c.position.x += ud.direction.x * ud.walkSpeed * dt;
+    c.position.z += ud.direction.z * ud.walkSpeed * dt;
+
+    // Reverse if out of bounds
+    if (Math.abs(c.position.x) > 25) ud.direction.x *= -1;
+    if (Math.abs(c.position.z) > 15) ud.direction.z *= -1;
+
+    // Face direction of movement
+    c.rotation.y = Math.atan2(ud.direction.x, ud.direction.z);
+
+    // Leg animation
+    const legPhase = t * 5 * ud.walkSpeed + ud.walkOffset;
+    ud.legL.rotation.x = Math.sin(legPhase) * 0.4;
+    ud.legR.rotation.x = -Math.sin(legPhase) * 0.4;
+  });
+
+  // Subtle stars twinkle
+  stars.material.opacity = 0.6 + Math.sin(t) * 0.15;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// Hide loading and start
+document.getElementById('loading').style.display = 'none';
+animate();
+</script>
+
+</body>
+</html>

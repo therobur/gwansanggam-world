@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관상감 페르소나 월드 — 비주얼 데모 3종</title>
+<style>
+:root {
+  --gsg-ink-900: #0B1220;
+  --gsg-ink-800: #111827;
+  --gsg-ink-700: #1F2937;
+  --gsg-paper: #FAF7F0;
+  --gsg-gold-500: #C9A24B;
+  --gsg-gold-300: #E6C87A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: var(--gsg-ink-900);
+  color: var(--gsg-paper);
+  min-height: 100vh;
+  padding: 80px 40px;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.brand {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 48px;
+  color: var(--gsg-gold-500);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.brand small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  opacity: 0.5;
+  margin-top: 4px;
+}
+.intro {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 18px;
+  line-height: 1.7;
+  margin: 40px 0 60px;
+  opacity: 0.85;
+  max-width: 700px;
+}
+.demos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+.demo-card {
+  background: var(--gsg-ink-800);
+  border: 1px solid var(--gsg-ink-700);
+  padding: 32px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s;
+  display: block;
+}
+.demo-card:hover {
+  border-color: var(--gsg-gold-500);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(201,162,75,0.15);
+}
+.demo-tag {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  color: var(--gsg-gold-500);
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+}
+.demo-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 28px;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.demo-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  opacity: 0.75;
+  margin-bottom: 20px;
+}
+.demo-stats {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  opacity: 0.5;
+  border-top: 1px solid var(--gsg-ink-700);
+  padding-top: 16px;
+  margin-top: 16px;
+  letter-spacing: 0.05em;
+  line-height: 1.8;
+}
+.note {
+  background: var(--gsg-ink-800);
+  border-left: 3px solid var(--gsg-gold-500);
+  padding: 20px 24px;
+  margin-top: 60px;
+  font-size: 14px;
+  line-height: 1.7;
+  opacity: 0.85;
+}
+.note strong { color: var(--gsg-gold-500); }
+.compare {
+  margin-top: 60px;
+}
+.compare h2 {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 24px;
+  color: var(--gsg-gold-500);
+  margin-bottom: 20px;
+}
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.compare-table th, .compare-table td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gsg-ink-700);
+}
+.compare-table th {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--gsg-gold-500);
+}
+.compare-table td:first-child { font-weight: 600; opacity: 0.9; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="brand">관상감 觀象監<small>VISUAL DEMOS — PERSONA WORLD CONCEPT</small></div>
+
+  <div class="intro">
+    1.78M명의 합성 한국인이 살아가는 세상 플랫폼의 비주얼 방향을 결정하기 위한 데모.
+    각 데모를 클릭해서 직접 비교하세요. 30명 페르소나 샘플로 작동합니다.
+    실제 사이트에서는 1.78M 풀에서 매번 다른 30~500명이 노출됩니다.
+  </div>
+
+  <div class="demos">
+    <a href="demo-delta-bruno.html" class="demo-card" style="border-color: var(--gsg-gold-500);">
+      <div class="demo-tag" style="color: var(--gsg-gold-300);">⭐ DEMO δ · 추천</div>
+      <div class="demo-title">BRUNO-SIMON.COM 스타일<br>몰입형 3D 탐험</div>
+      <div class="demo-desc">
+        사용자 요청 레퍼런스 (bruno-simon.com). 1인칭 WASD로 한국 도시를
+        걸어다니며 30명 페르소나 만남. 가까이 가면 E 키로 대화 시작.
+        야간 도시, 네온 간판, 가로등, 가로수, 별이 가득한 하늘.
+        Three.js PointerLockControls + 동적 조명.
+      </div>
+      <div class="demo-stats">
+        STACK: Three.js + PointerLockControls<br>
+        CONTROLS: WASD + 마우스 + Shift + E<br>
+        FEATURES: 로딩화면 / 인트로 / 컴파스 / Discovery 카운터<br>
+        IMPACT: ★★★★★ "이거 진짜 게임이네?"
+      </div>
+    </a>
+
+    <a href="demo-beta-cinematic.html" class="demo-card">
+      <div class="demo-tag">DEMO β</div>
+      <div class="demo-title">CINEMATIC + INTERACTIVE<br>시네마틱 인트로 + 2D 인터랙티브</div>
+      <div class="demo-desc">
+        7초 시네마틱 인트로 (0 → 1,784,048 카운터, 천체 줌)
+        → 그 다음 2D 평면 인터랙티브 모드.
+        첫 인상 임팩트 극대화. SKIP 버튼 제공.
+      </div>
+      <div class="demo-stats">
+        STACK: HTML + CSS animations<br>
+        INTRO DURATION: 7초 (skip 가능)<br>
+        MOBILE: ✓ 우수<br>
+        IMPACT: ★★★★ "오프닝이 영화 같다"
+      </div>
+    </a>
+
+    <a href="demo-alpha-photo-sprites.html" class="demo-card">
+      <div class="demo-tag">DEMO α</div>
+      <div class="demo-title">PHOTO + SPRITES<br>2D 배경 + 캐릭터 오버레이</div>
+      <div class="demo-desc">
+        2D 평면 한국 거리 + 30명 캐릭터가 걸어다님.
+        클릭하면 narrative 패널이 슬라이드인.
+        가장 안정적, 가장 가벼움, 모바일 친화적.
+      </div>
+      <div class="demo-stats">
+        STACK: HTML + CSS + SVG<br>
+        PERFORMANCE: 60fps 안정<br>
+        MOBILE: ✓ 우수<br>
+        IMPACT: ★★★ "예쁘지만 평면적"
+      </div>
+    </a>
+
+    <a href="demo-gamma-3d.html" class="demo-card">
+      <div class="demo-tag">DEMO γ</div>
+      <div class="demo-title">3D 정적 카메라<br>관전형 3D</div>
+      <div class="demo-desc">
+        Three.js 3D 거리를 위에서 내려다보는 시점.
+        드래그로 회전, 스크롤로 줌, 클릭으로 사람 선택.
+        탐험 X, 관찰 O.
+      </div>
+      <div class="demo-stats">
+        STACK: Three.js + OrbitControls<br>
+        CAMERA: 외부 관전<br>
+        MOBILE: △ 무거움<br>
+        IMPACT: ★★ "걸어다닐 수 없다"
+      </div>
+    </a>
+  </div>
+
+  <div class="compare">
+    <h2>비교표</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>기준</th>
+          <th>δ BRUNO 스타일 ⭐</th>
+          <th>β CINEMATIC</th>
+          <th>α PHOTO+SPRITES</th>
+          <th>γ 3D 관전</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>몰입감</td><td>★★★★★</td><td>★★★</td><td>★★</td><td>★★★</td></tr>
+        <tr><td>"진짜야?" 임팩트</td><td>★★★★★</td><td>★★★★</td><td>★★★</td><td>★★</td></tr>
+        <tr><td>탐험 가능성</td><td>★★★★★ (걸어다님)</td><td>X (정적)</td><td>X (정적)</td><td>△ (관전)</td></tr>
+        <tr><td>9일 polish 난이도</td><td>★★★★ 매우 어려움</td><td>★ 쉬움</td><td>★ 쉬움</td><td>★★ 보통</td></tr>
+        <tr><td>모바일 안정성</td><td>★★ (터치 컨트롤 필요)</td><td>★★★★★</td><td>★★★★★</td><td>★★★</td></tr>
+        <tr><td>브랜드 임팩트</td><td>★★★★★ (Bruno급)</td><td>★★★★</td><td>★★★</td><td>★★</td></tr>
+        <tr><td>유지보수 비용</td><td>높음</td><td>낮음</td><td>낮음</td><td>중간</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <strong>참고:</strong> 모든 데모는 동일한 30명 페르소나 데이터를 사용합니다.
+    실제 사이트에서는 1.78M 풀에서 매번 다른 사람들이 노출되며,
+    각 페르소나는 3,000~5,000자 narrative와 클릭 시 Claude Haiku 기반 실시간 대화 가능합니다.
+    배경 이미지는 데모에선 CSS로 만든 placeholder이고, 실제 사이트에서는 실사 사진/360° 파노라마를 사용합니다.
+  </div>
+</div>
+</body>
+</html>

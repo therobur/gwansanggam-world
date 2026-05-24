@@ -1,0 +1,17 @@
+.DS_Store
+*.log
+.vercel
+node_modules
+
+# Kenney assets - only keep GLB format (exclude FBX/OBJ/Previews)
+assets/*/Models/FBX format/
+assets/*/Models/OBJ format/
+assets/*/Models/GLTF format/
+assets/*/Previews/
+assets/*/Isometric/
+assets/*/Side/
+assets/*/Sample.png
+assets/*/Preview.png
+assets/*/Preview*.png
+assets/*/*.url
+assets/*/Overview.html
