@@ -381,16 +381,25 @@ function loadGLTF(path, name, phaseId) {
   });
 }
 
-// Parallel using multiple loader instances (Three.js GLTFLoader not thread-safe per instance)
-async function loadParallel(items, makeLoader) {
-  // Each item gets its own loader instance via makeLoader(), runs all in parallel
-  return Promise.all(items.map(async (it) => {
+// Parallel using multiple loader instances (each item gets own loader for thread-safety)
+async function loadParallel(items) {
+  return Promise.all(items.map((it) => {
     const myLoader = new GLTFLoader();
     return new Promise((resolve) => {
-      myLoader.load(it.path,
-        (gltf) => { tick(it.name, it.phaseId); resolve({ item: it, gltf }); },
+      const encodedPath = encodeURI(it.path);
+      console.log('Loading:', encodedPath);
+      myLoader.load(encodedPath,
+        (gltf) => {
+          console.log('Loaded:', it.name);
+          tick(it.name, it.phaseId);
+          resolve({ item: it, gltf });
+        },
         undefined,
-        (err) => { console.warn('Load failed:', it.path, err); tick('FAIL: ' + it.name, it.phaseId); resolve({ item: it, gltf: null }); }
+        (err) => {
+          console.error('Load failed:', encodedPath, err);
+          tick('FAIL: ' + it.name, it.phaseId);
+          resolve({ item: it, gltf: null });
+        }
       );
     });
   }));
