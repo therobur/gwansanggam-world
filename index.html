@@ -381,51 +381,55 @@ function loadGLTF(path, name, phaseId) {
   });
 }
 
-// Parallel using multiple loader instances (each item gets own loader for thread-safety)
-async function loadParallel(items) {
-  return Promise.all(items.map((it) => {
-    const myLoader = new GLTFLoader();
-    return new Promise((resolve) => {
-      const encodedPath = encodeURI(it.path);
-      console.log('Loading:', encodedPath);
-      myLoader.load(encodedPath,
-        (gltf) => {
-          console.log('Loaded:', it.name);
-          tick(it.name, it.phaseId);
-          resolve({ item: it, gltf });
-        },
-        undefined,
-        (err) => {
-          console.error('Load failed:', encodedPath, err);
-          tick('FAIL: ' + it.name, it.phaseId);
-          resolve({ item: it, gltf: null });
-        }
-      );
-    });
-  }));
+// Sequential loading - proven working (v3 pattern)
+function loadSingle(path, name, phaseId) {
+  return new Promise((resolve) => {
+    const encodedPath = encodeURI(path);
+    console.log('Loading:', encodedPath);
+    loader.load(encodedPath,
+      (gltf) => {
+        console.log('OK:', name);
+        tick(name, phaseId);
+        resolve(gltf);
+      },
+      undefined,
+      (err) => {
+        console.error('FAIL:', encodedPath, err);
+        tick('FAIL: ' + name, phaseId);
+        resolve(null);
+      }
+    );
+  });
 }
 
 async function loadAll() {
-  loadingText.textContent = 'LOADING 3D MODELS · 병렬 다운로드';
+  loadingText.textContent = 'LOADING 3D MODELS · 순차 다운로드';
   loadStartTime = performance.now();
+  console.log('loadAll starting, total assets:', totalAssets);
 
-  const buildingItems = BUILDING_FILES.map(n => ({ path: `${BASE}/city/Models/GLB format/${n}.glb`, name: n, phaseId: 'buildings' }));
-  const lowBuildingItems = LOW_BUILDING_FILES.map(n => ({ path: `${BASE}/city/Models/GLB format/${n}.glb`, name: n, phaseId: 'low-buildings' }));
-  const characterItems = CHARACTER_FILES.map(n => ({ path: `${BASE}/mixamo/${n}.glb`, name: n, phaseId: 'characters' }));
-  const carItems = CAR_FILES.map(n => ({ path: `${BASE}/car/Models/GLB format/${n}.glb`, name: n, phaseId: 'cars' }));
+  for (const n of BUILDING_FILES) {
+    const r = await loadSingle(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'buildings');
+    if (r) buildingModels.push(r.scene);
+  }
+  console.log('Buildings done:', buildingModels.length);
 
-  // All categories loading in parallel (each item has own loader)
-  const [buildResults, lowResults, charResults, carResults] = await Promise.all([
-    loadParallel(buildingItems),
-    loadParallel(lowBuildingItems),
-    loadParallel(characterItems),
-    loadParallel(carItems)
-  ]);
+  for (const n of LOW_BUILDING_FILES) {
+    const r = await loadSingle(`${BASE}/city/Models/GLB format/${n}.glb`, n, 'low-buildings');
+    if (r) lowBuildingModels.push(r.scene);
+  }
+  console.log('Low buildings done:', lowBuildingModels.length);
 
-  buildResults.forEach(r => { if (r.gltf) buildingModels.push(r.gltf.scene); });
-  lowResults.forEach(r => { if (r.gltf) lowBuildingModels.push(r.gltf.scene); });
-  charResults.forEach(r => { if (r.gltf) characterModels.push({ scene: r.gltf.scene, animations: r.gltf.animations }); });
-  carResults.forEach(r => { if (r.gltf) carModels.push(r.gltf.scene); });
+  for (const n of CHARACTER_FILES) {
+    const r = await loadSingle(`${BASE}/mixamo/${n}.glb`, n, 'characters');
+    if (r) characterModels.push({ scene: r.scene, animations: r.animations });
+  }
+  console.log('Characters done:', characterModels.length);
+
+  for (const n of CAR_FILES) {
+    const r = await loadSingle(`${BASE}/car/Models/GLB format/${n}.glb`, n, 'cars');
+    if (r) carModels.push(r.scene);
+  }
+  console.log('Cars done:', carModels.length);
 
   loadingText.textContent = 'BUILDING WORLD · 세계 구축 중';
   loadingDetail.textContent = '도시 배치, 캐릭터 배치, 자동차 배치 중...';
