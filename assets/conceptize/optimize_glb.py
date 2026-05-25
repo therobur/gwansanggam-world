@@ -1,0 +1,95 @@
+"""Blender Python: Aggressive web optimization.
+- Resize all textures to 1024x1024 max
+- Keep only selected buildings (subset)
+- Export with Draco compression
+"""
+import bpy
+import sys
+import os
+
+# Clear scene
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
+fbx_path = sys.argv[-2]
+output_glb = sys.argv[-1]
+
+print(f"\n=== Importing FBX ===")
+bpy.ops.import_scene.fbx(filepath=fbx_path)
+
+# === Select subset of buildings (12 best variety) ===
+# Keep representative variety: tall, mid, small buildings
+KEEP_KEYWORDS = [
+    "COZE_SK_Tall_bldg_A",
+    "COZE_SK_Tall_bldg_C",
+    "COZE_SK_Tall_bldg_E",
+    "COZE_SK_Tall_bldg_G",
+    "COZE_SK_Mid_bldg_A",
+    "COZE_SK_Mid_bldg_C",
+    "COZE_SK_Mid_bldg_E",
+    "COZE_SK_Mid_bldg_G",
+    "COZE_SK_Small_bldg_A",
+    "COZE_SK_Small_bldg_B",
+    "COZE_SK_Small_bldg_C",
+    "COZE_SK_Small_bldg_E",
+]
+
+def should_keep(name):
+    return any(name.startswith(kw) for kw in KEEP_KEYWORDS)
+
+# Delete objects we don't want
+objects_to_delete = []
+for obj in bpy.data.objects:
+    if obj.type == 'MESH' and not should_keep(obj.name):
+        objects_to_delete.append(obj)
+
+print(f"Deleting {len(objects_to_delete)} objects (keeping {len(KEEP_KEYWORDS)} building groups)")
+for obj in objects_to_delete:
+    bpy.data.objects.remove(obj, do_unlink=True)
+
+print(f"Remaining mesh objects: {len([o for o in bpy.data.objects if o.type == 'MESH'])}")
+
+# === Resize all textures to 1024 max ===
+print(f"\n=== Resizing {len(bpy.data.images)} textures to 1024px max ===")
+for img in bpy.data.images:
+    if img.size[0] > 1024 or img.size[1] > 1024:
+        scale = 1024 / max(img.size[0], img.size[1])
+        new_w = int(img.size[0] * scale)
+        new_h = int(img.size[1] * scale)
+        img.scale(new_w, new_h)
+        print(f"  Resized: {img.name} -> {new_w}x{new_h}")
+
+# === Clean up unused materials ===
+bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
+print("\n=== Post-optimization stats ===")
+print(f"Objects: {len([o for o in bpy.data.objects if o.type == 'MESH'])}")
+print(f"Materials: {len(bpy.data.materials)}")
+print(f"Images: {len(bpy.data.images)}")
+total_polys = sum(len(m.polygons) for m in bpy.data.meshes)
+print(f"Polygons: {total_polys:,}")
+
+# Select all remaining
+bpy.ops.object.select_all(action='SELECT')
+
+print(f"\n=== Exporting optimized GLB ===")
+bpy.ops.export_scene.gltf(
+    filepath=output_glb,
+    export_format='GLB',
+    export_yup=True,
+    export_apply=True,
+    export_animations=False,
+    export_draco_mesh_compression_enable=True,
+    export_draco_mesh_compression_level=6,
+    export_draco_position_quantization=12,
+    export_draco_normal_quantization=8,
+    export_draco_texcoord_quantization=10,
+    export_image_format='JPEG',  # Force JPEG (smaller than PNG)
+    export_jpeg_quality=75
+)
+
+size_mb = os.path.getsize(output_glb) / (1024 * 1024)
+print(f"\n=== DONE ===")
+print(f"Output: {output_glb}")
+print(f"Size: {size_mb:.1f} MB")

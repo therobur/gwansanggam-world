@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>관상감 觀象監 · 가상 거리 v5</title>
+<title>관상감 觀象監 · 서울 거리 v6</title>
 <style>
 :root { --gsg-ink-900:#0B1220; --gsg-ink-800:#111827; --gsg-ink-700:#1F2937; --gsg-paper:#FAF7F0; --gsg-gold-500:#C9A24B; --gsg-gold-300:#E6C87A; }
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
@@ -34,7 +34,7 @@ canvas { display:block; cursor:crosshair; }
 .is-mobile .intro-desktop-only { display:none; }
 .is-desktop .intro-mobile-only { display:none; }
 
-.hud-top { position:fixed; top:0; left:0; right:0; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(to bottom, rgba(0,0,0,0.5), transparent); z-index:100; pointer-events:none; color:#FAF7F0; }
+.hud-top { position:fixed; top:0; left:0; right:0; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); z-index:100; pointer-events:none; color:#FAF7F0; }
 .brand { font-family:'Noto Serif KR', serif; font-size:20px; color:#FAF7F0; letter-spacing:0.08em; text-shadow:0 2px 8px rgba(0,0,0,0.8); }
 .brand small { font-size:9px; opacity:0.7; display:block; letter-spacing:0.25em; margin-top:2px; }
 .location-tag { font-family:'SF Mono', monospace; font-size:10px; opacity:0.9; border-left:3px solid #C9A24B; padding-left:10px; text-align:right; text-shadow:0 2px 8px rgba(0,0,0,0.8); }
@@ -78,7 +78,7 @@ canvas { display:block; cursor:crosshair; }
 .chat-input::placeholder { opacity:0.4; }
 .chat-hint { font-size:11px; opacity:0.4; margin-top:8px; line-height:1.5; color:var(--gsg-paper); }
 
-.attribution { position:fixed; bottom:6px; left:50%; transform:translateX(-50%); font-family:'SF Mono', monospace; font-size:9px; letter-spacing:0.1em; opacity:0.55; pointer-events:none; z-index:50; color:#FAF7F0; text-shadow:0 1px 4px rgba(0,0,0,0.8); white-space:nowrap; }
+.attribution { position:fixed; bottom:6px; left:50%; transform:translateX(-50%); font-family:'SF Mono', monospace; font-size:9px; letter-spacing:0.1em; opacity:0.6; pointer-events:none; z-index:50; color:#FAF7F0; text-shadow:0 1px 4px rgba(0,0,0,0.8); white-space:nowrap; }
 @media (max-width: 640px) { .attribution { font-size:8px; letter-spacing:0.03em; } .compass { display:none; } .hud-bottom { font-size:9px; padding:10px 14px; } .hud-bottom .count-big { font-size:18px; } }
 
 #joystick { display:none; position:fixed; bottom:100px; left:30px; width:140px; height:140px; z-index:200; touch-action:none; }
@@ -103,8 +103,8 @@ canvas { display:block; cursor:crosshair; }
 </div>
 
 <div id="intro-overlay">
-  <div class="intro-title">동아시아 가상 거리</div>
-  <div class="intro-desc">30명의 합성 한국인이 살고 있습니다.<br>돌아다니며 누구든 만나서 대화하세요.</div>
+  <div class="intro-title">서울 거리</div>
+  <div class="intro-desc">진짜 한국 도시. 30명의 합성 한국인이 살고 있습니다.<br>돌아다니며 누구든 만나서 대화하세요.</div>
   <div class="intro-controls intro-desktop-only">
     <div><span class="kbd">W A S D</span>걷기</div>
     <div><span class="kbd">MOUSE</span>둘러보기</div>
@@ -121,7 +121,7 @@ canvas { display:block; cursor:crosshair; }
 
 <div class="hud-top">
   <div class="brand">관상감 觀象監<small>ROYAL OBSERVATORY FOR TOMORROW</small></div>
-  <div class="location-tag"><span class="demo-tag">동아시아 거리</span><span>오후 5:30 · GOLDEN HOUR</span></div>
+  <div class="location-tag"><span class="demo-tag">서울 거리</span><span>오후 5:30 · GOLDEN HOUR</span></div>
 </div>
 
 <div class="reticle"></div>
@@ -138,7 +138,7 @@ canvas { display:block; cursor:crosshair; }
 <div id="look-area"></div>
 <button id="chat-btn" onclick="window.triggerInteract && window.triggerInteract()">대화</button>
 
-<div class="attribution">SCENE · LITTLESTTOKYO BY GLEN FOX (CC-BY) · CHARACTERS · MIXAMO · ENGINE · THREE.JS</div>
+<div class="attribution">SEOUL STREETS · CONCEPTIZE.IO · CHARACTERS · MIXAMO · ENGINE · THREE.JS</div>
 
 <aside class="panel" id="panel">
   <button class="panel-close" onclick="closePanel()">CLOSE ✕</button>
@@ -169,6 +169,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Sky } from 'three/addons/objects/Sky.js';
 
 const IS_MOBILE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 document.body.classList.add(IS_MOBILE ? 'is-mobile' : 'is-desktop');
@@ -206,12 +207,11 @@ const PERSONAS = [
   {id:'GOLD-064827', name:'정아라', age:25, gender:'여', addr:'서울 강북구 미아동', job:'간호조무사 (3년)', narrative:'전문대 졸 후 간호조무사. 강아지가 유일한 동거인.'}
 ];
 
-// === Scene ===
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x303040);
+scene.background = new THREE.Color(0xfff4d6);
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 5000);
-camera.position.set(0, 50, 200);
+camera.position.set(0, 20, 40);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -219,116 +219,126 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.4;
+renderer.toneMappingExposure = 1.2;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
-// Environment lighting (RoomEnvironment for nice PBR reflections)
-const pmremGenerator = new THREE.PMREMGenerator(renderer);
-const envScene = new RoomEnvironment(renderer);
-scene.environment = pmremGenerator.fromScene(envScene, 0.04).texture;
+// Sky - golden hour
+const sky = new Sky();
+sky.scale.setScalar(450000);
+scene.add(sky);
+const sun = new THREE.Vector3();
+const skyU = sky.material.uniforms;
+skyU['turbidity'].value = 6;
+skyU['rayleigh'].value = 2.5;
+skyU['mieCoefficient'].value = 0.005;
+skyU['mieDirectionalG'].value = 0.85;
+sun.setFromSphericalCoords(1, THREE.MathUtils.degToRad(78), THREE.MathUtils.degToRad(180));
+skyU['sunPosition'].value.copy(sun);
+
+// PBR environment for reflections
+const pmremGen = new THREE.PMREMGenerator(renderer);
+scene.environment = pmremGen.fromScene(new RoomEnvironment(), 0.04).texture;
 
 // Lights
-scene.add(new THREE.HemisphereLight(0xfff4d6, 0x404060, 1.0));
-const sunLight = new THREE.DirectionalLight(0xffd089, 1.8);
-sunLight.position.set(80, 120, 60);
+scene.add(new THREE.HemisphereLight(0xfff4d6, 0xa66f3a, 0.6));
+const sunLight = new THREE.DirectionalLight(0xffd089, 2.2);
+sunLight.position.copy(sun).multiplyScalar(80);
 sunLight.castShadow = true;
-sunLight.shadow.camera.left = -200;
-sunLight.shadow.camera.right = 200;
-sunLight.shadow.camera.top = 200;
-sunLight.shadow.camera.bottom = -200;
+sunLight.shadow.camera.left = -80;
+sunLight.shadow.camera.right = 80;
+sunLight.shadow.camera.top = 80;
+sunLight.shadow.camera.bottom = -80;
 sunLight.shadow.camera.near = 1;
-sunLight.shadow.camera.far = 500;
+sunLight.shadow.camera.far = 250;
 sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
 sunLight.shadow.bias = -0.0005;
 scene.add(sunLight);
 
-// === Loading UI ===
+// Ground (fallback under the scene)
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(2000, 2000),
+  new THREE.MeshStandardMaterial({ color: 0x8c8c95, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.5;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// === Loading ===
 const loadingBar = document.getElementById('loading-bar');
 const loadingPercent = document.getElementById('loading-percent');
 const loadingText = document.getElementById('loading-text');
 const loadingDetail = document.getElementById('loading-detail');
 
-let totalSize = 0;
+let totalSize = (22 + 3.1) * 1024 * 1024; // seoul_streets + michelle
 let loadedSize = 0;
-const SIZES = { tokyo: 3.9 * 1024 * 1024, michelle: 3.1 * 1024 * 1024 };
-totalSize = SIZES.tokyo + SIZES.michelle;
 
-function updateLoading(addedBytes, msg) {
-  loadedSize += addedBytes;
-  const pct = Math.min(100, Math.round((loadedSize / totalSize) * 100));
-  loadingBar.style.width = pct + '%';
-  loadingPercent.textContent = pct;
-  if (msg) loadingDetail.textContent = msg;
-}
-
-function loadGLB(path, sizeKey) {
+function loadGLB(path, sizeMB, label) {
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
     const draco = new DRACOLoader();
     draco.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/');
     loader.setDRACOLoader(draco);
-    loadingDetail.textContent = `loading ${path.split('/').pop()}...`;
-    loader.load(
-      path,
-      (gltf) => { updateLoading(SIZES[sizeKey] || 0, `loaded ${path.split('/').pop()}`); resolve(gltf); },
+    loadingDetail.textContent = `loading ${label}...`;
+    loader.load(path,
+      (gltf) => {
+        loadedSize += sizeMB * 1024 * 1024;
+        const pct = Math.min(100, Math.round((loadedSize / totalSize) * 100));
+        loadingBar.style.width = pct + '%';
+        loadingPercent.textContent = pct;
+        loadingDetail.textContent = `loaded ${label}`;
+        resolve(gltf);
+      },
       (xhr) => {
         if (xhr.lengthComputable) {
-          const pct = (xhr.loaded / xhr.total) * 100;
-          loadingDetail.textContent = `${path.split('/').pop()} · ${Math.round(pct)}%`;
+          const filePct = (xhr.loaded / xhr.total);
+          const total = loadedSize + filePct * sizeMB * 1024 * 1024;
+          const pct = Math.min(100, Math.round((total / totalSize) * 100));
+          loadingBar.style.width = pct + '%';
+          loadingPercent.textContent = pct;
+          loadingDetail.textContent = `${label} · ${Math.round(filePct * 100)}%`;
         }
       },
-      (err) => { console.error('Failed:', path, err); reject(err); }
+      (err) => { console.error('Load failed:', path, err); reject(err); }
     );
   });
 }
 
-// === Build world ===
-let tokyoModel = null;
-let tokyoMixer = null;
-const characters = []; // {object, mixer, persona, ring}
+let seoulModel = null;
+const characters = [];
 const discovered = new Set();
 
 async function loadAll() {
-  loadingText.textContent = 'LOADING TOKYO STREET...';
-  const tokyoGltf = await loadGLB('./assets/LittlestTokyo.glb', 'tokyo');
-
-  loadingText.textContent = 'LOADING CHARACTERS...';
-  const michelleGltf = await loadGLB('./assets/mixamo/Michelle.glb', 'michelle');
+  loadingText.textContent = 'LOADING 서울 거리...';
+  const seoulGltf = await loadGLB('./assets/conceptize/seoul_streets.glb', 22, 'Seoul Streets');
+  const michelleGltf = await loadGLB('./assets/mixamo/Michelle.glb', 3.1, 'Michelle character');
 
   loadingText.textContent = 'BUILDING WORLD...';
 
-  // === Place LittlestTokyo ===
-  tokyoModel = tokyoGltf.scene;
-  // LittlestTokyo native scale is tiny, scale up
-  tokyoModel.scale.setScalar(0.1);
-  tokyoModel.position.set(0, 0, 0);
-  tokyoModel.traverse(c => {
+  // === Place Seoul Streets ===
+  seoulModel = seoulGltf.scene;
+  seoulModel.traverse(c => {
     if (c.isMesh) {
       c.castShadow = true;
       c.receiveShadow = true;
     }
   });
-  scene.add(tokyoModel);
+  scene.add(seoulModel);
 
-  // Animate Tokyo (built-in animations)
-  if (tokyoGltf.animations && tokyoGltf.animations.length > 0) {
-    tokyoMixer = new THREE.AnimationMixer(tokyoModel);
-    tokyoGltf.animations.forEach(clip => tokyoMixer.clipAction(clip).play());
-  }
-
-  // === Compute bounds for character placement and camera ===
-  const box = new THREE.Box3().setFromObject(tokyoModel);
+  // Compute scene bounds
+  const box = new THREE.Box3().setFromObject(seoulModel);
   const size = new THREE.Vector3(); box.getSize(size);
   const center = new THREE.Vector3(); box.getCenter(center);
+  console.log('Seoul bounds:', size, 'center:', center);
 
-  console.log('Tokyo bounds:', size, 'center:', center);
+  // Place camera at street level inside the scene
+  camera.position.set(center.x, box.min.y + 1.7, center.z + size.z * 0.3);
 
-  // Position camera at street level inside the scene
-  camera.position.set(center.x, center.y - size.y * 0.2, center.z + size.z * 0.4);
+  window.SCENE_BOUNDS = { min: box.min.clone(), max: box.max.clone(), center: center.clone(), size: size.clone() };
 
-  // === Place characters using Michelle as base ===
+  // === Place characters using Michelle ===
   const michelleModel = michelleGltf.scene;
   michelleModel.traverse(c => {
     if (c.isMesh || c.isSkinnedMesh) {
@@ -337,14 +347,14 @@ async function loadAll() {
     }
   });
 
-  const charScale = size.y * 0.05; // Scale characters relative to scene
-  const placementRadius = Math.min(size.x, size.z) * 0.35;
+  // Determine character scale based on scene size (Michelle should be ~1.7 units tall)
+  const charScale = 1.0;
+  const placementRadius = Math.min(size.x, size.z) * 0.4;
 
   PERSONAS.forEach((p, i) => {
     const cloned = SkeletonUtils.clone(michelleModel);
     cloned.scale.setScalar(charScale);
 
-    // Color tint variation
     const tintColors = [0xffffff, 0xffe0b0, 0xffd6cc, 0xd9e8ff, 0xd0f0d0, 0xfff0a0, 0xffd0e0, 0xe0d0ff, 0xb0ffd0, 0xffb0b0];
     const tint = new THREE.Color(tintColors[i % tintColors.length]);
     cloned.traverse(c => {
@@ -355,14 +365,15 @@ async function loadAll() {
       }
     });
 
-    // Position around the scene
+    // Distribute around the scene center
     const angle = (i / PERSONAS.length) * Math.PI * 2 + Math.random() * 0.3;
     const r = placementRadius * (0.3 + Math.random() * 0.7);
-    const x = center.x + Math.cos(angle) * r;
-    const z = center.z + Math.sin(angle) * r;
-    cloned.position.set(x, box.min.y, z);
+    cloned.position.set(
+      center.x + Math.cos(angle) * r,
+      box.min.y,
+      center.z + Math.sin(angle) * r
+    );
 
-    // Walk animation
     const mixer = new THREE.AnimationMixer(cloned);
     if (michelleGltf.animations && michelleGltf.animations.length > 0) {
       const walkClip = michelleGltf.animations.find(a => /walk|run/i.test(a.name)) || michelleGltf.animations[0];
@@ -371,10 +382,9 @@ async function loadAll() {
       action.play();
     }
 
-    // Glow ring
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(charScale * 0.5, charScale * 0.7, 32),
-      new THREE.MeshBasicMaterial({ color: 0xC9A24B, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.7, 0.95, 32),
+      new THREE.MeshBasicMaterial({ color: 0xC9A24B, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.05;
@@ -383,7 +393,7 @@ async function loadAll() {
     characters.push({
       object: cloned,
       mixer, ring, persona: p,
-      walkSpeed: charScale * 0.5 + Math.random() * charScale * 0.3,
+      walkSpeed: 0.8 + Math.random() * 0.6,
       walkOffset: Math.random() * Math.PI * 2,
       direction: new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize(),
       discovered: false,
@@ -393,18 +403,15 @@ async function loadAll() {
     });
     scene.add(cloned);
   });
-
-  // Set movement bounds globally
-  window.SCENE_BOUNDS = { min: box.min.clone(), max: box.max.clone(), center: center.clone(), size: size.clone() };
 }
 
-// === Post-processing ===
+// Post-processing
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.7, 0.85));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.7, 0.85));
 composer.addPass(new OutputPass());
 
-// === Controls ===
+// Controls
 const controls = new PointerLockControls(camera, document.body);
 const move = { forward: false, backward: false, left: false, right: false, sprint: false };
 let touchVec = { x: 0, y: 0 };
@@ -436,7 +443,6 @@ document.addEventListener('keyup', (e) => {
   }
 });
 
-// Mobile joystick
 const joystick = document.getElementById('joystick');
 const joyKnob = document.getElementById('joystick-knob');
 const joyBase = document.getElementById('joystick-base');
@@ -456,59 +462,14 @@ function setKnob(dx, dy) {
   touchVec.y = Math.sin(angle) * clamp;
 }
 
-joystick.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  const t = e.changedTouches[0];
-  joyTouchId = t.identifier;
-  const rect = joyBase.getBoundingClientRect();
-  joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-}, { passive: false });
+joystick.addEventListener('touchstart', (e) => { e.preventDefault(); const t = e.changedTouches[0]; joyTouchId = t.identifier; const rect = joyBase.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; }, { passive: false });
+joystick.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === joyTouchId) setKnob(t.clientX - joyCenter.x, t.clientY - joyCenter.y); }, { passive: false });
+joystick.addEventListener('touchend', (e) => { for (const t of e.changedTouches) if (t.identifier === joyTouchId) { joyTouchId = null; joyKnob.style.transform = 'translate(0, 0)'; touchVec = { x: 0, y: 0 }; } });
 
-joystick.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) setKnob(t.clientX - joyCenter.x, t.clientY - joyCenter.y);
-  }
-}, { passive: false });
-
-joystick.addEventListener('touchend', (e) => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) {
-      joyTouchId = null;
-      joyKnob.style.transform = 'translate(0, 0)';
-      touchVec = { x: 0, y: 0 };
-    }
-  }
-});
-
-let lookTouchId = null;
-let lookLast = { x: 0, y: 0 };
-let mYaw = 0, mPitch = 0;
-
-lookArea.addEventListener('touchstart', (e) => {
-  if (lookTouchId !== null) return;
-  const t = e.changedTouches[0];
-  lookTouchId = t.identifier;
-  lookLast = { x: t.clientX, y: t.clientY };
-}, { passive: true });
-
-lookArea.addEventListener('touchmove', (e) => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === lookTouchId) {
-      mYaw -= (t.clientX - lookLast.x) * 0.005;
-      mPitch -= (t.clientY - lookLast.y) * 0.005;
-      mPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, mPitch));
-      camera.rotation.set(mPitch, mYaw, 0, 'YXZ');
-      lookLast = { x: t.clientX, y: t.clientY };
-    }
-  }
-}, { passive: true });
-
-lookArea.addEventListener('touchend', (e) => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === lookTouchId) lookTouchId = null;
-  }
-});
+let lookTouchId = null, lookLast = { x: 0, y: 0 }, mYaw = 0, mPitch = 0;
+lookArea.addEventListener('touchstart', (e) => { if (lookTouchId !== null) return; const t = e.changedTouches[0]; lookTouchId = t.identifier; lookLast = { x: t.clientX, y: t.clientY }; }, { passive: true });
+lookArea.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === lookTouchId) { mYaw -= (t.clientX - lookLast.x) * 0.005; mPitch -= (t.clientY - lookLast.y) * 0.005; mPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, mPitch)); camera.rotation.set(mPitch, mYaw, 0, 'YXZ'); lookLast = { x: t.clientX, y: t.clientY }; } }, { passive: true });
+lookArea.addEventListener('touchend', (e) => { for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null; });
 
 window.triggerInteract = () => { interactPressed = true; };
 
@@ -518,9 +479,7 @@ renderer.domElement.addEventListener('mouseup', () => {
   if (performance.now() - clickStartTime < 200 && !IS_MOBILE) {
     if (!controls.isLocked && gameStarted && !document.getElementById('panel').classList.contains('open')) {
       try { controls.lock(); } catch(e){}
-    } else if (nearestChar) {
-      interactPressed = true;
-    }
+    } else if (nearestChar) interactPressed = true;
   }
 });
 
@@ -531,18 +490,11 @@ const pauseHint = document.getElementById('pause-hint');
 function startGame() {
   gameStarted = true;
   introOverlay.classList.add('hide');
-  if (!IS_MOBILE) {
-    try { controls.lock(); } catch (e) { console.warn('Pointer lock failed:', e); }
-  }
+  if (!IS_MOBILE) try { controls.lock(); } catch (e) { console.warn('Pointer lock failed:', e); }
 }
 startBtn.addEventListener('click', startGame);
-
 controls.addEventListener('lock', () => pauseHint.classList.remove('show'));
-controls.addEventListener('unlock', () => {
-  if (gameStarted && !document.getElementById('panel').classList.contains('open') && !IS_MOBILE) {
-    pauseHint.classList.add('show');
-  }
-});
+controls.addEventListener('unlock', () => { if (gameStarted && !document.getElementById('panel').classList.contains('open') && !IS_MOBILE) pauseHint.classList.add('show'); });
 
 function openPanel(p) {
   document.getElementById('panel-id').textContent = 'PERSONA #' + p.id;
@@ -568,17 +520,14 @@ window.addEventListener('resize', () => {
 const promptEl = document.getElementById('prompt');
 const promptName = document.getElementById('prompt-name');
 
-// Compute speed scaled to scene size
-let MOVE_SPEED = 100;
-let INTERACT_DIST = 8;
+const MOVE_SPEED = 15;
+const INTERACT_DIST = 3.5;
 
 function animate() {
   requestAnimationFrame(animate);
   const time = performance.now();
   const dt = Math.min((time - prevTime) / 1000, 0.1);
   prevTime = time;
-
-  if (tokyoMixer) tokyoMixer.update(dt);
 
   if (gameStarted && window.SCENE_BOUNDS) {
     velocity.x -= velocity.x * 8 * dt;
@@ -597,14 +546,12 @@ function animate() {
     controls.moveRight(-velocity.x * dt);
     controls.moveForward(-velocity.z * dt);
 
-    // Keep camera within scene bounds
     const camPos = controls.getObject().position;
     const b = window.SCENE_BOUNDS;
-    camPos.x = Math.max(b.min.x - 50, Math.min(b.max.x + 50, camPos.x));
-    camPos.z = Math.max(b.min.z - 50, Math.min(b.max.z + 50, camPos.z));
-    camPos.y = b.center.y + b.size.y * 0.05; // street level
+    camPos.x = Math.max(b.min.x - 20, Math.min(b.max.x + 20, camPos.x));
+    camPos.z = Math.max(b.min.z - 20, Math.min(b.max.z + 20, camPos.z));
+    camPos.y = b.min.y + 1.7; // street level
 
-    // Find nearest character
     let nearest = null, nearestDist = INTERACT_DIST;
     characters.forEach(c => {
       const o = c.object;
@@ -642,25 +589,22 @@ function animate() {
     interactPressed = false;
   }
 
-  // Animate characters
   characters.forEach(c => {
     if (c.mixer) c.mixer.update(dt);
     const o = c.object;
     o.position.x += c.direction.x * c.walkSpeed * dt;
     o.position.z += c.direction.z * c.walkSpeed * dt;
-    // Stay within placement radius
     const dx = o.position.x - c.center.x;
     const dz = o.position.z - c.center.z;
     const d = Math.sqrt(dx*dx + dz*dz);
     if (d > c.placementRadius) c.direction.multiplyScalar(-1);
     o.rotation.y = Math.atan2(c.direction.x, c.direction.z);
-    c.ring.material.opacity = (c.discovered ? 0.9 : 0.5) + Math.sin(time * 0.003 + c.walkOffset) * 0.2;
+    c.ring.material.opacity = (c.discovered ? 0.9 : 0.6) + Math.sin(time * 0.003 + c.walkOffset) * 0.2;
   });
 
   composer.render();
 }
 
-// Global error catcher
 window.addEventListener('error', (e) => {
   console.error('Global error:', e.error || e.message);
   loadingText.textContent = 'ERROR · 콘솔 확인';
@@ -669,16 +613,16 @@ window.addEventListener('error', (e) => {
 });
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled rejection:', e.reason);
-  loadingText.textContent = 'PROMISE ERROR · 콘솔 확인';
+  loadingText.textContent = 'PROMISE ERROR';
   loadingDetail.textContent = String(e.reason?.message || e.reason || 'unknown').substring(0, 100);
   loadingDetail.style.color = '#c0392b';
 });
 
 (async () => {
   try {
-    console.log('Starting...');
+    console.log('v6 starting...');
     await loadAll();
-    console.log('All loaded. Characters:', characters.length);
+    console.log('Loaded. Characters:', characters.length);
     loadingText.textContent = 'READY.';
     setTimeout(() => {
       document.getElementById('loading').classList.add('hide');

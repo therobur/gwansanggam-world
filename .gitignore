@@ -15,3 +15,6 @@ assets/*/Preview.png
 assets/*/Preview*.png
 assets/*/*.url
 assets/*/Overview.html
+
+# Large 3D assets (deploy via Vercel directly, not GitHub)
+assets/conceptize/*.glb
